@@ -1,0 +1,17 @@
+/* Content script styles */
+#note-extension-icon {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#note-extension-sidebar {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Ensure sidebar is above all other content */
+#note-extension-sidebar {
+  z-index: 2147483647 !important;
+}
+
+#note-extension-icon {
+  z-index: 2147483646 !important;
+}

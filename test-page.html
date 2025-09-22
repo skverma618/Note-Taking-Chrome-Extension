@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Page for Note Extension</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #2563eb;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            background-color: #f9fafb;
+        }
+        .instructions {
+            background-color: #dbeafe;
+            border: 1px solid #93c5fd;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            margin-top: 0;
+            color: #1e40af;
+        }
+        code {
+            background-color: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Note Extension Test Page</h1>
+    
+    <div class="instructions">
+        <h3>🚀 How to Test the Extension</h3>
+        <ol>
+            <li>Load the extension in Chrome by going to <code>chrome://extensions/</code></li>
+            <li>Enable "Developer mode" and click "Load unpacked"</li>
+            <li>Select the <code>dist</code> folder from the project</li>
+            <li>Come back to this page and try selecting text below</li>
+            <li>Look for the blue "+" icon that appears near your selection</li>
+            <li>Click the extension icon in the toolbar to open the popup</li>
+        </ol>
+    </div>
+
+    <div class="section">
+        <h2>Sample Content for Testing</h2>
+        <p>
+            This is a <span class="highlight">sample paragraph</span> that you can use to test the Note Extension. 
+            Try selecting different parts of this text to see how the extension works. The extension will 
+            automatically detect your text selection and show a blue "+" icon nearby.
+        </p>
+        
+        <p>
+            <strong>Important features to test:</strong> When you select text and click the "+" icon, 
+            the selected text should be added to a note for this page. You can then open the sidebar 
+            to see and edit your notes.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>Lorem Ipsum Content</h2>
+        <p>
+            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt 
+            ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation 
+            ullamco laboris nisi ut aliquip ex ea commodo consequat.
+        </p>
+        
+        <p>
+            Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat 
+            nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui 
+            officia deserunt mollit anim id est laborum.
+        </p>
+        
+        <p>
+            Sed ut perspiciatis unde omnis iste natus error sit voluptatem accusantium doloremque 
+            laudantium, totam rem aperiam, eaque ipsa quae ab illo inventore veritatis et quasi 
+            architecto beatae vitae dicta sunt explicabo.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>Technical Information</h2>
+        <p>
+            This extension is built with <strong>React</strong>, <strong>Vite</strong>, and 
+            <strong>Tailwind CSS</strong>. It uses Chrome's Manifest V3 format and stores 
+            notes using <code>chrome.storage.local</code>.
+        </p>
+        
+        <p>
+            The extension includes a content script that injects a sidebar interface, 
+            a background service worker for lifecycle management, and a popup interface 
+            for quick access to your notes.
+        </p>
+    </div>
+
+    <div class="section">
+        <h2>Features to Test</h2>
+        <ul>
+            <li><strong>Text Selection:</strong> Select any text on this page</li>
+            <li><strong>Add to Notes:</strong> Click the "+" icon that appears</li>
+            <li><strong>Sidebar:</strong> Press Escape or click the extension icon to open sidebar</li>
+            <li><strong>Edit Notes:</strong> Modify the note content in the sidebar</li>
+            <li><strong>Edit Titles:</strong> Change the note title from the default page title</li>
+            <li><strong>Context Menu:</strong> Right-click selected text for quick access</li>
+        </ul>
+    </div>
+
+    <footer style="margin-top: 60px; padding-top: 20px; border-top: 1px solid #e5e7eb; color: #6b7280; text-align: center;">
+        <p>Note Extension Test Page - Built with React + Tailwind CSS</p>
+    </footer>
+</body>
+</html>
