@@ -205,6 +205,42 @@ const Sidebar = () => {
     }
   };
 
+  const openNote = async (url) => {
+    try {
+      console.log('📖 Opening note for URL:', url);
+      
+      // Load the note data for the clicked URL
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        console.warn('Chrome storage not available');
+        return;
+      }
+
+      const result = await chrome.storage.local.get(['notes']);
+      const allNotes = result.notes || {};
+      const noteToOpen = allNotes[url];
+      
+      if (noteToOpen) {
+        // Set the current note to the clicked note
+        setCurrentNote({ ...noteToOpen, url: url });
+        setCurrentUrl(url);
+        
+        // Extract title from URL for display
+        try {
+          const urlObj = new URL(url);
+          setCurrentTitle(noteToOpen.title || urlObj.hostname);
+        } catch {
+          setCurrentTitle(noteToOpen.title || 'Untitled Note');
+        }
+        
+        console.log('✅ Opened note:', noteToOpen);
+      } else {
+        console.warn('⚠️ Note not found for URL:', url);
+      }
+    } catch (error) {
+      console.error('❌ Error opening note:', error);
+    }
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -310,32 +346,58 @@ const Sidebar = () => {
               {Object.entries(notes)
                 .sort(([,a], [,b]) => new Date(b.updatedAt) - new Date(a.updatedAt))
                 .map(([url, note]) => (
-                  <div key={url} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+                  <div key={url} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                     <div className="flex items-start justify-between mb-2">
-                      <h4 className="font-medium text-sm text-gray-900 line-clamp-1">
+                      <h4
+                        className="font-medium text-sm text-gray-900 line-clamp-1 hover:text-blue-600 cursor-pointer flex-1"
+                        onClick={() => openNote(url)}
+                        title="Click to open this page"
+                      >
                         {note.title}
                       </h4>
                       <button
-                        onClick={() => deleteNote(url)}
-                        className="text-red-500 hover:text-red-700 text-xs ml-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteNote(url);
+                        }}
+                        className="text-red-500 hover:text-red-700 text-xs ml-2 flex-shrink-0"
                         title="Delete note"
                       >
                         ×
                       </button>
                     </div>
                     
-                    <p className="text-xs text-gray-500 mb-2">{truncateUrl(url)}</p>
+                    <p
+                      className="text-xs text-gray-500 mb-2 hover:text-blue-500 cursor-pointer"
+                      onClick={() => openNote(url)}
+                      title="Click to open this page"
+                    >
+                      {truncateUrl(url)}
+                    </p>
                     
                     {note.content && (
-                      <p className="text-xs text-gray-600 line-clamp-3 mb-2">
+                      <p
+                        className="text-xs text-gray-600 line-clamp-3 mb-2 hover:text-gray-800 cursor-pointer"
+                        onClick={() => openNote(url)}
+                        title="Click to open this page"
+                      >
                         {note.content.substring(0, 150)}
                         {note.content.length > 150 ? '...' : ''}
                       </p>
                     )}
                     
-                    <p className="text-xs text-gray-400">
-                      {formatDate(note.updatedAt)}
-                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-gray-400">
+                        {formatDate(note.updatedAt)}
+                      </p>
+                      <button
+                        onClick={() => openNote(url)}
+                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
+                        title="Open this page"
+                      >
+                        Open →
+                      </button>
+                    </div>
                   </div>
                 ))}
             </div>
