@@ -233,10 +233,57 @@ const AppleSidebar = () => {
     }
   };
 
-  const handleContentChange = (newContent) => {
+  const handleContentChange = (e) => {
+    const newContent = e.target.value;
+    const cursorPosition = e.target.selectionStart;
+    
     if (currentNote) {
       const updatedNote = { ...currentNote, content: newContent };
-      saveCurrentNote(updatedNote);
+      
+      // Update the note without triggering a full re-render
+      setCurrentNote(updatedNote);
+      
+      // Save to storage asynchronously
+      saveCurrentNoteAsync(updatedNote);
+      
+      // Restore cursor position after state update
+      setTimeout(() => {
+        if (e.target) {
+          e.target.setSelectionRange(cursorPosition, cursorPosition);
+        }
+      }, 0);
+    }
+  };
+
+  const saveCurrentNoteAsync = async (updatedNote) => {
+    try {
+      setSaveStatus('saving');
+      
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        console.log('Chrome storage not available');
+        setSaveStatus('error');
+        return;
+      }
+      
+      const result = await chrome.storage.local.get(['notes']);
+      const allNotes = result.notes || {};
+      
+      allNotes[updatedNote.url] = {
+        ...updatedNote,
+        updatedAt: new Date().toISOString()
+      };
+      
+      await chrome.storage.local.set({ notes: allNotes });
+      console.log('💾 Note saved:', updatedNote);
+      
+      setNotes(allNotes);
+      setSaveStatus('saved');
+      
+      // Show saved animation briefly
+      setTimeout(() => setSaveStatus('saved'), 1000);
+    } catch (error) {
+      console.error('Error saving note:', error);
+      setSaveStatus('error');
     }
   };
 
@@ -471,14 +518,14 @@ const AppleSidebar = () => {
       <div className="h-full bg-bg-secondary dark:bg-dark-bg-secondary backdrop-blur-apple flex flex-col">
         {/* Compact Header */}
         <div className="p-2 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2 dark:border-dark-gray-3">
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-2 pr-2">
             <h1 className="text-body font-sf font-semibold text-label-primary dark:text-dark-label-primary">
               Notes ({filteredNotes.length})
             </h1>
             {currentNote && (
               <button
                 onClick={goToCurrentNote}
-                className="px-2 py-1 text-caption font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple"
+                className="px-2 py-1 text-caption font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple mr-2"
               >
                 Current
               </button>
@@ -496,7 +543,7 @@ const AppleSidebar = () => {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-7 pr-2 py-1 text-caption font-sf bg-bg-secondary dark:bg-dark-bg-secondary border-0 rounded-apple-sm focus:outline-none focus:ring-1 focus:ring-system-blue focus:bg-bg-primary dark:focus:bg-dark-bg-primary transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
+              className="w-full pl-8 pr-2 py-1 text-caption font-sf bg-bg-secondary dark:bg-dark-bg-secondary border-0 rounded-apple-sm focus:outline-none focus:ring-1 focus:ring-system-blue focus:bg-bg-primary dark:focus:bg-dark-bg-primary transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
             />
           </div>
         </div>
@@ -543,7 +590,7 @@ const AppleSidebar = () => {
       <div className="h-full bg-bg-secondary dark:bg-dark-bg-secondary backdrop-blur-apple flex flex-col">
         {/* Minimal Header */}
         <div className="px-2 py-1 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2 dark:border-dark-gray-3">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pr-2">
             <button
               onClick={goToNotesList}
               className="flex items-center space-x-1 px-2 py-1 text-caption font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple"
@@ -554,7 +601,9 @@ const AppleSidebar = () => {
               <span>Notes</span>
             </button>
             
-            <SaveStatusIcon />
+            <div className="mr-2">
+              <SaveStatusIcon />
+            </div>
           </div>
           
           {editingTitle ? (
@@ -594,7 +643,7 @@ const AppleSidebar = () => {
         {currentNote ? (
           <textarea
             value={currentNote.content}
-            onChange={(e) => handleContentChange(e.target.value)}
+            onChange={handleContentChange}
             placeholder="Start writing your note..."
             className="flex-1 w-full p-3 text-body font-sf bg-bg-primary dark:bg-dark-bg-primary border-0 resize-none focus:outline-none transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
             style={{ minHeight: 'calc(100vh - 60px)' }}
