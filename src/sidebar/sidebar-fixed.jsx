@@ -8,9 +8,16 @@ const Sidebar = () => {
   const [currentTitle, setCurrentTitle] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState('');
+  
+  // Navigation state
+  const [currentView, setCurrentView] = useState('note'); // 'list' or 'note'
+  const [lastOpenedNoteUrl, setLastOpenedNoteUrl] = useState('');
 
   useEffect(() => {
     console.log('🔄 Sidebar initializing...');
+    
+    // Load saved state first
+    loadSavedState();
     
     // Get current page info from parent window
     getCurrentPageInfo();
@@ -78,6 +85,49 @@ const Sidebar = () => {
     }
   };
 
+  const loadSavedState = async () => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        console.log('Chrome storage not available');
+        return;
+      }
+      
+      const result = await chrome.storage.local.get(['sidebarState']);
+      const savedState = result.sidebarState || {};
+      
+      if (savedState.currentView) {
+        setCurrentView(savedState.currentView);
+      }
+      
+      if (savedState.lastOpenedNoteUrl) {
+        setLastOpenedNoteUrl(savedState.lastOpenedNoteUrl);
+      }
+      
+      console.log('📋 Loaded saved state:', savedState);
+    } catch (error) {
+      console.error('Error loading saved state:', error);
+    }
+  };
+
+  const saveState = async (view, noteUrl = '') => {
+    try {
+      if (typeof chrome === 'undefined' || !chrome.storage) {
+        console.log('Chrome storage not available');
+        return;
+      }
+      
+      const stateToSave = {
+        currentView: view,
+        lastOpenedNoteUrl: noteUrl || lastOpenedNoteUrl
+      };
+      
+      await chrome.storage.local.set({ sidebarState: stateToSave });
+      console.log('💾 Saved state:', stateToSave);
+    } catch (error) {
+      console.error('Error saving state:', error);
+    }
+  };
+
   const loadNotes = async () => {
     try {
       if (typeof chrome === 'undefined' || !chrome.storage) {
@@ -90,6 +140,18 @@ const Sidebar = () => {
       console.log('📚 Loaded notes:', allNotes);
       setNotes(allNotes);
       updateCurrentNote(allNotes);
+      
+      // If we have a last opened note and we're in note view, load it
+      if (lastOpenedNoteUrl && allNotes[lastOpenedNoteUrl] && currentView === 'note') {
+        setCurrentNote({ ...allNotes[lastOpenedNoteUrl], url: lastOpenedNoteUrl });
+        setCurrentUrl(lastOpenedNoteUrl);
+        try {
+          const urlObj = new URL(lastOpenedNoteUrl);
+          setCurrentTitle(allNotes[lastOpenedNoteUrl].title || urlObj.hostname);
+        } catch {
+          setCurrentTitle(allNotes[lastOpenedNoteUrl].title || 'Untitled Note');
+        }
+      }
     } catch (error) {
       console.error('Error loading notes:', error);
     }
@@ -223,6 +285,7 @@ const Sidebar = () => {
         // Set the current note to the clicked note
         setCurrentNote({ ...noteToOpen, url: url });
         setCurrentUrl(url);
+        setLastOpenedNoteUrl(url);
         
         // Extract title from URL for display
         try {
@@ -232,12 +295,28 @@ const Sidebar = () => {
           setCurrentTitle(noteToOpen.title || 'Untitled Note');
         }
         
+        // Switch to note view and save state
+        setCurrentView('note');
+        saveState('note', url);
+        
         console.log('✅ Opened note:', noteToOpen);
       } else {
         console.warn('⚠️ Note not found for URL:', url);
       }
     } catch (error) {
       console.error('❌ Error opening note:', error);
+    }
+  };
+
+  const goToNotesList = () => {
+    setCurrentView('list');
+    saveState('list');
+  };
+
+  const goToCurrentNote = () => {
+    if (currentNote || lastOpenedNoteUrl) {
+      setCurrentView('note');
+      saveState('note', lastOpenedNoteUrl);
     }
   };
 
@@ -266,93 +345,45 @@ const Sidebar = () => {
     }
   }, [currentUrl, currentTitle]);
 
-  return (
+  // Render Notes List Page
+  const renderNotesList = () => (
     <div className="h-full bg-white flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-gray-200">
-        <h1 className="text-lg font-semibold text-gray-900">Notes</h1>
-        {currentUrl && (
-          <p className="text-xs text-gray-500 mt-1">{truncateUrl(currentUrl)}</p>
-        )}
-      </div>
-
-      {/* Current Page Note */}
-      {currentNote && (
-        <div className="p-4 border-b border-gray-200 bg-blue-50">
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-blue-700">Current Page</span>
-              <button
-                onClick={handleTitleEdit}
-                className="text-xs text-blue-600 hover:text-blue-800"
-              >
-                Edit Title
-              </button>
-            </div>
-            
-            {editingTitle ? (
-              <div className="flex gap-2 mb-2">
-                <input
-                  type="text"
-                  value={tempTitle}
-                  onChange={(e) => setTempTitle(e.target.value)}
-                  className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded"
-                  autoFocus
-                />
-                <button
-                  onClick={handleTitleSave}
-                  className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={handleTitleCancel}
-                  className="px-2 py-1 text-xs bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <h3 className="font-medium text-gray-900 mb-2">{currentNote.title}</h3>
-            )}
-            
-            <p className="text-xs text-gray-500">{truncateUrl(currentNote.url)}</p>
-          </div>
-          
-          <textarea
-            value={currentNote.content}
-            onChange={(e) => handleContentChange(e.target.value)}
-            placeholder="Add your notes here... Select text on the page and click the + icon to add it automatically."
-            className="w-full h-32 p-3 text-sm border border-gray-300 rounded resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-          />
-          
-          {currentNote.updatedAt && (
-            <p className="text-xs text-gray-500 mt-2">
-              Last updated: {formatDate(currentNote.updatedAt)}
-            </p>
+        <div className="flex items-center justify-between">
+          <h1 className="text-lg font-semibold text-gray-900">All Notes</h1>
+          {currentNote && (
+            <button
+              onClick={goToCurrentNote}
+              className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50"
+            >
+              Current Note →
+            </button>
           )}
         </div>
-      )}
+        <p className="text-xs text-gray-500 mt-1">{Object.keys(notes).length} notes saved</p>
+      </div>
 
-      {/* All Notes List */}
+      {/* Notes List */}
       <div className="flex-1 overflow-y-auto">
         <div className="p-4">
-          <h2 className="text-sm font-medium text-gray-700 mb-3">All Notes ({Object.keys(notes).length})</h2>
-          
           {Object.keys(notes).length === 0 ? (
-            <p className="text-sm text-gray-500 italic">No notes yet. Start by selecting text on any webpage!</p>
+            <div className="text-center py-8">
+              <p className="text-sm text-gray-500 italic mb-2">No notes yet!</p>
+              <p className="text-xs text-gray-400">Start by selecting text on any webpage</p>
+            </div>
           ) : (
             <div className="space-y-3">
               {Object.entries(notes)
                 .sort(([,a], [,b]) => new Date(b.updatedAt) - new Date(a.updatedAt))
                 .map(([url, note]) => (
-                  <div key={url} className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <div
+                    key={url}
+                    className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors hover:border-blue-300"
+                    onClick={() => openNote(url)}
+                  >
                     <div className="flex items-start justify-between mb-2">
-                      <h4
-                        className="font-medium text-sm text-gray-900 line-clamp-1 hover:text-blue-600 cursor-pointer flex-1"
-                        onClick={() => openNote(url)}
-                        title="Click to open this page"
-                      >
+                      <h4 className="font-medium text-sm text-gray-900 line-clamp-1 flex-1">
                         {note.title}
                       </h4>
                       <button
@@ -360,29 +391,21 @@ const Sidebar = () => {
                           e.stopPropagation();
                           deleteNote(url);
                         }}
-                        className="text-red-500 hover:text-red-700 text-xs ml-2 flex-shrink-0"
+                        className="text-red-500 hover:text-red-700 text-xs ml-2 flex-shrink-0 p-1 hover:bg-red-50 rounded"
                         title="Delete note"
                       >
                         ×
                       </button>
                     </div>
                     
-                    <p
-                      className="text-xs text-gray-500 mb-2 hover:text-blue-500 cursor-pointer"
-                      onClick={() => openNote(url)}
-                      title="Click to open this page"
-                    >
+                    <p className="text-xs text-gray-500 mb-2">
                       {truncateUrl(url)}
                     </p>
                     
                     {note.content && (
-                      <p
-                        className="text-xs text-gray-600 line-clamp-3 mb-2 hover:text-gray-800 cursor-pointer"
-                        onClick={() => openNote(url)}
-                        title="Click to open this page"
-                      >
-                        {note.content.substring(0, 150)}
-                        {note.content.length > 150 ? '...' : ''}
+                      <p className="text-xs text-gray-600 line-clamp-3 mb-3">
+                        {note.content.substring(0, 200)}
+                        {note.content.length > 200 ? '...' : ''}
                       </p>
                     )}
                     
@@ -390,13 +413,9 @@ const Sidebar = () => {
                       <p className="text-xs text-gray-400">
                         {formatDate(note.updatedAt)}
                       </p>
-                      <button
-                        onClick={() => openNote(url)}
-                        className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
-                        title="Open this page"
-                      >
-                        Open →
-                      </button>
+                      <span className="text-xs text-blue-600">
+                        Click to open →
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -406,6 +425,93 @@ const Sidebar = () => {
       </div>
     </div>
   );
+
+  // Render Note Detail Page
+  const renderNoteDetail = () => (
+    <div className="h-full bg-white flex flex-col">
+      {/* Header */}
+      <div className="p-4 border-b border-gray-200">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={goToNotesList}
+            className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50 flex items-center"
+          >
+            ← All Notes
+          </button>
+          <button
+            onClick={handleTitleEdit}
+            className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
+          >
+            Edit Title
+          </button>
+        </div>
+        
+        {editingTitle ? (
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={tempTitle}
+              onChange={(e) => setTempTitle(e.target.value)}
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+            <button
+              onClick={handleTitleSave}
+              className="px-3 py-2 text-xs bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            >
+              Save
+            </button>
+            <button
+              onClick={handleTitleCancel}
+              className="px-3 py-2 text-xs bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        ) : (
+          <h1 className="text-lg font-semibold text-gray-900 mb-1">
+            {currentNote?.title || 'Untitled Note'}
+          </h1>
+        )}
+        
+        {currentNote && (
+          <p className="text-xs text-gray-500">{truncateUrl(currentNote.url)}</p>
+        )}
+      </div>
+
+      {/* Note Content */}
+      {currentNote ? (
+        <div className="flex-1 p-4">
+          <textarea
+            value={currentNote.content}
+            onChange={(e) => handleContentChange(e.target.value)}
+            placeholder="Add your notes here... Select text on the page and click the + icon to add it automatically."
+            className="w-full h-full p-4 text-sm border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+          
+          {currentNote.updatedAt && (
+            <p className="text-xs text-gray-500 mt-3">
+              Last updated: {formatDate(currentNote.updatedAt)}
+            </p>
+          )}
+        </div>
+      ) : (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-sm text-gray-500 mb-2">No note selected</p>
+            <button
+              onClick={goToNotesList}
+              className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50"
+            >
+              View All Notes
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  return currentView === 'list' ? renderNotesList() : renderNoteDetail();
 };
 
 // Initialize the sidebar
