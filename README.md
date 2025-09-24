@@ -5,6 +5,10 @@ A Chrome extension built with React + Tailwind CSS that allows you to select tex
 ## Features
 
 - **Text Selection**: Select text on any webpage and click the "+" icon to add it to your notes
+- **Multi-Selection**:
+  - **Desktop**: Hold Cmd (Mac) or Ctrl (Windows/Linux) while selecting multiple text snippets - they're automatically saved to notes
+  - **All Devices**: Click the multi-select toggle button (📝) to enable multi-selection mode - selections are automatically saved
+  - **Batch Processing**: Use the batch icon (📝) to save multiple collected selections at once (alternative method)
 - **Page-based Notes**: Each webpage gets its own note that you can edit and manage
 - **Sidebar Interface**: Full-height sidebar (30% viewport width) with React-based UI
 - **Editable Titles**: Change note titles from the default webpage title
