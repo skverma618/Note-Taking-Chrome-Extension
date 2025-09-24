@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import RichTextEditor from '../components/RichTextEditor.jsx';
 
 const AppleSidebar = () => {
   const [notes, setNotes] = useState({});
@@ -233,10 +234,7 @@ const AppleSidebar = () => {
     }
   };
 
-  const handleContentChange = (e) => {
-    const newContent = e.target.value;
-    const cursorPosition = e.target.selectionStart;
-    
+  const handleContentChange = (newContent) => {
     if (currentNote) {
       const updatedNote = { ...currentNote, content: newContent };
       
@@ -245,13 +243,6 @@ const AppleSidebar = () => {
       
       // Save to storage asynchronously
       saveCurrentNoteAsync(updatedNote);
-      
-      // Restore cursor position after state update
-      setTimeout(() => {
-        if (e.target) {
-          e.target.setSelectionRange(cursorPosition, cursorPosition);
-        }
-      }, 0);
     }
   };
 
@@ -641,13 +632,14 @@ const AppleSidebar = () => {
 
         {/* Full-size Note Content */}
         {currentNote ? (
-          <textarea
-            value={currentNote.content}
-            onChange={handleContentChange}
-            placeholder="Start writing your note..."
-            className="flex-1 w-full p-3 text-body font-sf bg-bg-primary dark:bg-dark-bg-primary border-0 resize-none focus:outline-none transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
-            style={{ minHeight: 'calc(100vh - 60px)' }}
-          />
+          <div className="flex-1 p-3 overflow-y-auto">
+            <RichTextEditor
+              content={currentNote.content}
+              onChange={handleContentChange}
+              placeholder="Start writing your note..."
+              isDarkMode={isDarkMode}
+            />
+          </div>
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center">
