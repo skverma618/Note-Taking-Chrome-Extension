@@ -599,7 +599,7 @@ class NoteExtension {
     
     // Check if chrome runtime is available
     if (typeof chrome !== 'undefined' && chrome.runtime) {
-      iframe.src = chrome.runtime.getURL('src/sidebar/sidebar-fixed.html');
+      iframe.src = chrome.runtime.getURL('src/sidebar/sidebar-apple.html');
     } else {
       console.error('❌ Chrome runtime not available for sidebar');
       // Fallback: create a simple HTML sidebar
