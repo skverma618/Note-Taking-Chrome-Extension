@@ -61,7 +61,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
     },
     editorProps: {
       attributes: {
-        class: 'focus:outline-none min-h-[200px] p-4',
+        class: 'focus:outline-none min-h-[200px] px-2 py-2',
       },
       handleKeyDown: (view, event) => {
         // Handle keyboard shortcuts
@@ -116,7 +116,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative w-9 h-9 rounded-full flex items-center justify-center
+        relative w-4 h-4 flex items-center justify-center
         transition-all duration-200 ease-out
         ${isActive
           ? 'bg-blue-500 text-white shadow-md scale-95'
@@ -174,9 +174,9 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
   return (
     <div className={`w-full ${isDarkMode ? 'dark' : ''}`}>
       {/* Toolbar */}
-      <div className="sticky top-0 z-40 mb-4">
-        <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm rounded-2xl p-3 shadow-sm border border-gray-200/50 dark:border-gray-700/50">
-          <div className="flex items-center gap-2 flex-wrap">
+      <div className="sticky top-0 z-40">
+        <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm shadow-sm border border-gray-200/50 dark:border-gray-700/50">
+          <div className="flex items-center flex-wrap">
             {/* Text Formatting */}
             <ToolbarButton
               onClick={() => {
@@ -188,7 +188,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('bold') || false}
               tooltip="Bold (⌘B)"
             >
-              <Bold size={16} />
+              <Bold size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -201,7 +201,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('italic') || false}
               tooltip="Italic (⌘I)"
             >
-              <Italic size={16} />
+              <Italic size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -214,7 +214,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('underline') || false}
               tooltip="Underline (⌘U)"
             >
-              <UnderlineIcon size={16} />
+              <UnderlineIcon size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -227,11 +227,11 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('strike') || false}
               tooltip="Strikethrough"
             >
-              <Strikethrough size={16} />
+              <Strikethrough size={12} />
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
 
             {/* Headings */}
             <ToolbarButton
@@ -244,7 +244,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('heading', { level: 1 }) || false}
               tooltip="Heading 1"
             >
-              <Heading1 size={16} />
+              <Heading1 size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -257,7 +257,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('heading', { level: 2 }) || false}
               tooltip="Heading 2"
             >
-              <Heading2 size={16} />
+              <Heading2 size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -270,11 +270,11 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('heading', { level: 3 }) || false}
               tooltip="Heading 3"
             >
-              <Heading3 size={16} />
+              <Heading3 size={12} />
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
 
             {/* Lists */}
             <ToolbarButton
@@ -287,7 +287,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('bulletList') || false}
               tooltip="Bullet List"
             >
-              <List size={16} />
+              <List size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -300,7 +300,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('orderedList') || false}
               tooltip="Numbered List"
             >
-              <ListOrdered size={16} />
+              <ListOrdered size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -313,11 +313,11 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('taskList') || false}
               tooltip="Task List"
             >
-              <CheckSquare size={16} />
+              <CheckSquare size={12} />
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
 
             {/* Code */}
             <ToolbarButton
@@ -330,7 +330,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('code') || false}
               tooltip="Inline Code"
             >
-              <Code size={16} />
+              <Code size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -343,11 +343,11 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={editor?.isActive('codeBlock') || false}
               tooltip="Code Block"
             >
-              <Code2 size={16} />
+              <Code2 size={12} />
             </ToolbarButton>
 
             {/* Divider */}
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
+            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
 
             {/* Colors */}
             <ToolbarButton
@@ -359,7 +359,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={showColorPicker}
               tooltip="Text Color"
             >
-              <Palette size={16} />
+              <Palette size={12} />
             </ToolbarButton>
 
             <ToolbarButton
@@ -371,17 +371,19 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               isActive={showHighlightPicker}
               tooltip="Highlight"
             >
-              <Highlighter size={16} />
+              <Highlighter size={12} />
             </ToolbarButton>
           </div>
         </div>
       </div>
 
       {/* Editor */}
-      <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden" style={{
+        minHeight: '600px',
+      }}>
         <EditorContent
           editor={editor}
-          className="min-h-[300px] max-h-[600px] overflow-y-auto max-w-none
+          className="h-full overflow-y-auto max-w-none py-2
             [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-1
             [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-1
             [&_li]:my-0 [&_li]:leading-tight

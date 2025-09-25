@@ -632,7 +632,7 @@ const AppleSidebar = () => {
 
         {/* Full-size Note Content */}
         {currentNote ? (
-          <div className="flex-1 p-3 overflow-y-auto">
+          <div className="p-0">
             <RichTextEditor
               content={currentNote.content}
               onChange={handleContentChange}
