@@ -1,3 +1,4 @@
+/* global chrome */
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import RichTextEditor from '../components/RichTextEditor.jsx';
@@ -88,7 +89,7 @@ const AppleSidebar = () => {
         setCurrentTitle(parentTitle);
         loadCurrentPageNote(parentUrl, parentTitle);
       }
-    } catch (error) {
+    } catch (_error) {
       console.log('Cannot access parent window info (expected in iframe)');
     }
   };
@@ -112,8 +113,8 @@ const AppleSidebar = () => {
       }
       
       console.log('📋 Loaded saved state:', savedState);
-    } catch (error) {
-      console.error('Error loading saved state:', error);
+    } catch (_error) {
+      console.error('Error loading saved state:', _error);
     }
   };
 
@@ -131,8 +132,8 @@ const AppleSidebar = () => {
       
       await chrome.storage.local.set({ sidebarState: stateToSave });
       console.log('💾 Saved state:', stateToSave);
-    } catch (error) {
-      console.error('Error saving state:', error);
+    } catch (_error) {
+      console.error('Error saving state:', _error);
     }
   };
 
@@ -160,8 +161,8 @@ const AppleSidebar = () => {
           setCurrentTitle(allNotes[lastOpenedNoteUrl].title || 'Untitled Note');
         }
       }
-    } catch (error) {
-      console.error('Error loading notes:', error);
+    } catch (_error) {
+      console.error('Error loading notes:', _error);
     }
   };
 
@@ -196,8 +197,8 @@ const AppleSidebar = () => {
           updatedAt: new Date().toISOString()
         });
       }
-    } catch (error) {
-      console.error('Error loading current page note:', error);
+    } catch (_error) {
+      console.error('Error loading current page note:', _error);
     }
   };
 
@@ -228,8 +229,8 @@ const AppleSidebar = () => {
       
       // Show saved animation briefly
       setTimeout(() => setSaveStatus('saved'), 1000);
-    } catch (error) {
-      console.error('Error saving note:', error);
+    } catch (_error) {
+      console.error('Error saving note:', _error);
       setSaveStatus('error');
     }
   };
@@ -272,8 +273,8 @@ const AppleSidebar = () => {
       
       // Show saved animation briefly
       setTimeout(() => setSaveStatus('saved'), 1000);
-    } catch (error) {
-      console.error('Error saving note:', error);
+    } catch (_error) {
+      console.error('Error saving note:', _error);
       setSaveStatus('error');
     }
   };
@@ -315,8 +316,8 @@ const AppleSidebar = () => {
       if (currentNote && currentNote.url === url) {
         loadCurrentPageNote(currentUrl, currentTitle);
       }
-    } catch (error) {
-      console.error('Error deleting note:', error);
+    } catch (_error) {
+      console.error('Error deleting note:', _error);
     }
   };
 
@@ -352,8 +353,8 @@ const AppleSidebar = () => {
       } else {
         console.warn('⚠️ Note not found for URL:', url);
       }
-    } catch (error) {
-      console.error('❌ Error opening note:', error);
+    } catch (_error) {
+      console.error('❌ Error opening note:', _error);
     }
   };
 
@@ -390,14 +391,6 @@ const AppleSidebar = () => {
     }
   };
 
-  const truncateUrl = (url) => {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname;
-    } catch {
-      return url;
-    }
-  };
 
   const filteredNotes = Object.entries(notes).filter(([url, note]) => {
     if (!searchQuery) return true;
@@ -422,7 +415,7 @@ const AppleSidebar = () => {
     
     if (saveStatus === 'saved') {
       return (
-        <div className="flex items-center space-x-1 animate-pulse">
+        <div className="flex items-center space-x-1 text-gray-5 dark:text-dark-gray-5 transition-colors duration-apple ease-apple">
           <svg className="w-3 h-3 text-system-green" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
           </svg>
@@ -431,7 +424,11 @@ const AppleSidebar = () => {
       );
     }
     
-    return null;
+    return (
+      <div className="flex items-center space-x-1 text-gray-5 dark:text-dark-gray-5">
+        <span className="text-caption">Idle</span>
+      </div>
+    );
   };
 
   // Search Bar Component
@@ -467,10 +464,10 @@ const AppleSidebar = () => {
             e.stopPropagation();
             onDelete(url);
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 text-gray-5 hover:text-system-red hover:bg-system-red hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple"
+          className="opacity-0 group-hover:opacity-100 p-1 text-gray-5 hover:text-system-red hover:bg-system-red hover:bg-opacity-10 rounded-md transition-all duration-apple ease-apple min-w-[28px] min-h-[28px] flex items-center justify-center"
           title="Delete note"
         >
-          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
           </svg>
         </button>
@@ -508,15 +505,15 @@ const AppleSidebar = () => {
     <div className={`h-full font-sf ${isDarkMode ? 'dark' : ''}`}>
       <div className="h-full bg-bg-secondary dark:bg-dark-bg-secondary backdrop-blur-apple flex flex-col">
         {/* Compact Header */}
-        <div className="p-2 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2 dark:border-dark-gray-3">
-          <div className="flex items-center justify-between mb-2 pr-2">
-            <h1 className="text-body font-sf font-semibold text-label-primary dark:text-dark-label-primary">
+        <div className="px-2 py-3 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2/10 dark:border-dark-gray-3/10">
+          <div className="flex items-center justify-between mb-2">
+            <h1 className="text-title font-sf font-semibold text-label-primary dark:text-dark-label-primary">
               Notes ({filteredNotes.length})
             </h1>
             {currentNote && (
               <button
                 onClick={goToCurrentNote}
-                className="px-2 py-1 text-caption font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple mr-2"
+                className="px-3 py-2 text-body font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-lg transition-all duration-apple ease-apple min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
                 Current
               </button>
@@ -534,13 +531,13 @@ const AppleSidebar = () => {
               placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-8 pr-2 py-1 text-caption font-sf bg-bg-secondary dark:bg-dark-bg-secondary border-0 rounded-apple-sm focus:outline-none focus:ring-1 focus:ring-system-blue focus:bg-bg-primary dark:focus:bg-dark-bg-primary transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
+              className="w-full pl-8 pr-2 py-2 text-body font-sf bg-bg-secondary dark:bg-dark-bg-secondary border-0 rounded-lg focus:outline-none focus:ring-2 focus:ring-system-blue focus:bg-bg-primary dark:focus:bg-dark-bg-primary transition-all duration-apple ease-apple placeholder-gray-5 dark:placeholder-dark-gray-5 text-label-primary dark:text-dark-label-primary"
             />
           </div>
         </div>
 
         {/* Notes List */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-4">
           {filteredNotes.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-center py-8">
               <div className="w-12 h-12 bg-gray-2 dark:bg-dark-bg-tertiary rounded-full flex items-center justify-center mb-3">
@@ -548,7 +545,7 @@ const AppleSidebar = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
               </div>
-              <h3 className="text-caption font-sf font-medium text-label-primary dark:text-dark-label-primary mb-1">
+              <h3 className="text-body font-sf font-medium text-label-primary dark:text-dark-label-primary mb-1">
                 {searchQuery ? 'No matching notes' : 'No notes yet'}
               </h3>
               <p className="text-caption text-label-secondary dark:text-dark-label-secondary">
@@ -580,11 +577,11 @@ const AppleSidebar = () => {
     <div className={`h-full font-sf ${isDarkMode ? 'dark' : ''}`}>
       <div className="h-full bg-bg-secondary dark:bg-dark-bg-secondary backdrop-blur-apple flex flex-col">
         {/* Minimal Header */}
-        <div className="px-2 py-1 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2 dark:border-dark-gray-3">
-          <div className="flex items-center justify-between pr-2">
+        <div className="px-2 py-1 bg-bg-primary/80 dark:bg-dark-bg-primary/80 backdrop-blur-apple border-b border-gray-2/10 dark:border-dark-gray-3/10">
+          <div className="flex items-center justify-between">
             <button
               onClick={goToNotesList}
-              className="flex items-center space-x-1 px-2 py-1 text-caption font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-apple-sm transition-all duration-apple ease-apple"
+              className="flex items-center space-x-1 p-2 text-body font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-lg transition-all duration-apple ease-apple"
             >
               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -592,36 +589,36 @@ const AppleSidebar = () => {
               <span>Notes</span>
             </button>
             
-            <div className="mr-2">
+            <div className="flex items-center space-x-2">
               <SaveStatusIcon />
             </div>
           </div>
           
           {editingTitle ? (
-            <div className="flex space-x-1 mt-1">
+            <div className="flex space-x-1 mt-2">
               <input
                 type="text"
                 value={tempTitle}
                 onChange={(e) => setTempTitle(e.target.value)}
-                className="flex-1 px-2 py-1 text-caption font-sf font-semibold bg-bg-secondary dark:bg-dark-bg-secondary border border-gray-3 dark:border-dark-gray-4 rounded-apple-sm focus:outline-none focus:ring-1 focus:ring-system-blue focus:border-transparent text-label-primary dark:text-dark-label-primary"
+                className="flex-1 px-2 py-1 text-body font-sf font-semibold bg-bg-secondary dark:bg-dark-bg-secondary border border-gray-3 dark:border-dark-gray-4 rounded-lg focus:outline-none focus:ring-1 focus:ring-system-blue focus:border-transparent text-label-primary dark:text-dark-label-primary"
                 autoFocus
               />
               <button
                 onClick={handleTitleSave}
-                className="px-2 py-1 text-caption font-sf font-medium bg-system-blue text-white rounded-apple-sm hover:bg-opacity-90 transition-all duration-apple ease-apple"
+                className="px-2 py-1 text-body font-sf font-medium bg-system-blue text-white rounded-lg hover:bg-opacity-90 transition-all duration-apple ease-apple"
               >
                 Save
               </button>
               <button
                 onClick={handleTitleCancel}
-                className="px-2 py-1 text-caption font-sf font-medium bg-gray-2 dark:bg-dark-bg-tertiary text-label-primary dark:text-dark-label-primary rounded-apple-sm hover:bg-gray-3 dark:hover:bg-dark-bg-quaternary transition-all duration-apple ease-apple"
+                className="px-2 py-1 text-body font-sf font-medium bg-gray-2 dark:bg-dark-bg-tertiary text-label-primary dark:text-dark-label-primary rounded-lg hover:bg-gray-3 dark:hover:bg-dark-bg-quaternary transition-all duration-apple ease-apple"
               >
                 Cancel
               </button>
             </div>
           ) : (
             <h1
-              className="text-caption font-sf font-semibold text-label-primary dark:text-dark-label-primary cursor-pointer hover:text-system-blue transition-colors duration-apple"
+              className="text-title font-sf font-semibold text-label-primary dark:text-dark-label-primary cursor-pointer hover:text-system-blue transition-colors duration-apple mt-2 px-2"
               onClick={handleTitleEdit}
               title="Click to edit title"
             >
@@ -632,7 +629,7 @@ const AppleSidebar = () => {
 
         {/* Full-size Note Content */}
         {currentNote ? (
-          <div className="p-0">
+          <div className="flex-1 overflow-y-auto">
             <RichTextEditor
               content={currentNote.content}
               onChange={handleContentChange}
@@ -669,6 +666,8 @@ const AppleSidebar = () => {
 
   return currentView === 'list' ? renderNotesList() : renderNoteDetail();
 };
+
+export default AppleSidebar;
 
 // Initialize the Apple sidebar
 console.log('🍎 Apple Sidebar script loading...');

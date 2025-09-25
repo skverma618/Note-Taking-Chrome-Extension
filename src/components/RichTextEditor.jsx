@@ -116,22 +116,20 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
       onClick={onClick}
       disabled={disabled}
       className={`
-        relative w-4 h-4 flex items-center justify-center
-        transition-all duration-200 ease-out
+        relative w-7 h-7 flex items-center justify-center rounded-md
+        transition-all duration-apple ease-apple-spring
         ${isActive
-          ? 'bg-blue-500 text-white shadow-md scale-95'
-          : 'bg-white/70 dark:bg-gray-800/70 text-gray-700 dark:text-gray-300 hover:bg-white/90 dark:hover:bg-gray-700/90 hover:scale-105'
+          ? 'bg-system-blue text-white shadow-md scale-[0.95]'
+          : 'text-gray-5 dark:text-dark-gray-5 hover:bg-gray-2 dark:hover:bg-dark-gray-3 active:scale-[0.95]'
         }
         ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-        backdrop-blur-sm shadow-sm hover:shadow-md
-        active:scale-95
         group
       `}
       title={tooltip}
     >
       {children}
       {tooltip && (
-        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
+        <div className="absolute bottom-full mb-2 left-1/2 transform -translate-x-1/2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-apple pointer-events-none whitespace-nowrap z-50">
           {tooltip}
         </div>
       )}
@@ -174,216 +172,214 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
   return (
     <div className={`w-full ${isDarkMode ? 'dark' : ''}`}>
       {/* Toolbar */}
-      <div className="sticky top-0 z-40">
-        <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-sm shadow-sm border border-gray-200/50 dark:border-gray-700/50">
-          <div className="flex items-center flex-wrap">
+      <div className="sticky top-0 z-40 font-sf">
+        <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-apple px-2 py-1">
+          <div className="flex items-center flex-wrap gap-x-2">
             {/* Text Formatting */}
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleBold().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('bold') || false}
-              tooltip="Bold (⌘B)"
-            >
-              <Bold size={12} />
-            </ToolbarButton>
+            <div className="flex gap-x-1">
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleBold().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('bold') || false}
+                tooltip="Bold (⌘B)"
+              >
+                <Bold size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleItalic().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('italic') || false}
-              tooltip="Italic (⌘I)"
-            >
-              <Italic size={12} />
-            </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleItalic().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('italic') || false}
+                tooltip="Italic (⌘I)"
+              >
+                <Italic size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleUnderline().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('underline') || false}
-              tooltip="Underline (⌘U)"
-            >
-              <UnderlineIcon size={12} />
-            </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleUnderline().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('underline') || false}
+                tooltip="Underline (⌘U)"
+              >
+                <UnderlineIcon size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleStrike().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('strike') || false}
-              tooltip="Strikethrough"
-            >
-              <Strikethrough size={12} />
-            </ToolbarButton>
-
-            {/* Divider */}
-            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleStrike().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('strike') || false}
+                tooltip="Strikethrough"
+              >
+                <Strikethrough size={18} />
+              </ToolbarButton>
+            </div>
 
             {/* Headings */}
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleHeading({ level: 1 }).run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('heading', { level: 1 }) || false}
-              tooltip="Heading 1"
-            >
-              <Heading1 size={12} />
-            </ToolbarButton>
+            <div className="flex gap-x-1">
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleHeading({ level: 1 }).run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('heading', { level: 1 }) || false}
+                tooltip="Heading 1"
+              >
+                <Heading1 size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleHeading({ level: 2 }).run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('heading', { level: 2 }) || false}
-              tooltip="Heading 2"
-            >
-              <Heading2 size={12} />
-            </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleHeading({ level: 2 }).run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('heading', { level: 2 }) || false}
+                tooltip="Heading 2"
+              >
+                <Heading2 size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleHeading({ level: 3 }).run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('heading', { level: 3 }) || false}
-              tooltip="Heading 3"
-            >
-              <Heading3 size={12} />
-            </ToolbarButton>
-
-            {/* Divider */}
-            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleHeading({ level: 3 }).run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('heading', { level: 3 }) || false}
+                tooltip="Heading 3"
+              >
+                <Heading3 size={18} />
+              </ToolbarButton>
+            </div>
 
             {/* Lists */}
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleBulletList().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('bulletList') || false}
-              tooltip="Bullet List"
-            >
-              <List size={12} />
-            </ToolbarButton>
+            <div className="flex gap-x-1">
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleBulletList().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('bulletList') || false}
+                tooltip="Bullet List"
+              >
+                <List size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleOrderedList().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('orderedList') || false}
-              tooltip="Numbered List"
-            >
-              <ListOrdered size={12} />
-            </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleOrderedList().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('orderedList') || false}
+                tooltip="Numbered List"
+              >
+                <ListOrdered size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleTaskList().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('taskList') || false}
-              tooltip="Task List"
-            >
-              <CheckSquare size={12} />
-            </ToolbarButton>
-
-            {/* Divider */}
-            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleTaskList().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('taskList') || false}
+                tooltip="Task List"
+              >
+                <CheckSquare size={18} />
+              </ToolbarButton>
+            </div>
 
             {/* Code */}
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleCode().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('code') || false}
-              tooltip="Inline Code"
-            >
-              <Code size={12} />
-            </ToolbarButton>
+            <div className="flex gap-x-1">
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleCode().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('code') || false}
+                tooltip="Inline Code"
+              >
+                <Code size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                if (editor) {
-                  editor.chain().focus().toggleCodeBlock().run();
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-                }
-              }}
-              isActive={editor?.isActive('codeBlock') || false}
-              tooltip="Code Block"
-            >
-              <Code2 size={12} />
-            </ToolbarButton>
-
-            {/* Divider */}
-            {/* <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" /> */}
+              <ToolbarButton
+                onClick={() => {
+                  if (editor) {
+                    editor.chain().focus().toggleCodeBlock().run();
+                    setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                  }
+                }}
+                isActive={editor?.isActive('codeBlock') || false}
+                tooltip="Code Block"
+              >
+                <Code2 size={18} />
+              </ToolbarButton>
+            </div>
 
             {/* Colors */}
-            <ToolbarButton
-              onClick={() => {
-                setShowColorPicker(!showColorPicker);
-                setShowHighlightPicker(false);
-                setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-              }}
-              isActive={showColorPicker}
-              tooltip="Text Color"
-            >
-              <Palette size={12} />
-            </ToolbarButton>
+            <div className="flex gap-x-1">
+              <ToolbarButton
+                onClick={() => {
+                  setShowColorPicker(!showColorPicker);
+                  setShowHighlightPicker(false);
+                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                }}
+                isActive={showColorPicker}
+                tooltip="Text Color"
+              >
+                <Palette size={18} />
+              </ToolbarButton>
 
-            <ToolbarButton
-              onClick={() => {
-                setShowHighlightPicker(!showHighlightPicker);
-                setShowColorPicker(false);
-                setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
-              }}
-              isActive={showHighlightPicker}
-              tooltip="Highlight"
-            >
-              <Highlighter size={12} />
-            </ToolbarButton>
+              <ToolbarButton
+                onClick={() => {
+                  setShowHighlightPicker(!showHighlightPicker);
+                  setShowColorPicker(false);
+                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+                }}
+                isActive={showHighlightPicker}
+                tooltip="Highlight"
+              >
+                <Highlighter size={18} />
+              </ToolbarButton>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Editor */}
-      <div className="bg-white dark:bg-gray-900 shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden" style={{
+      <div className="bg-white dark:bg-[#1C1C1E] rounded-2xl shadow-lg overflow-hidden mx-2 my-2" style={{
         minHeight: '600px',
       }}>
         <EditorContent
           editor={editor}
-          className="h-full overflow-y-auto max-w-none py-2
+          className="h-full overflow-y-auto max-w-prose mx-auto py-2 px-4 font-sf leading-relaxed
             [&_ul]:list-disc [&_ul]:ml-6 [&_ul]:my-1
             [&_ol]:list-decimal [&_ol]:ml-6 [&_ol]:my-1
             [&_li]:my-0 [&_li]:leading-tight
