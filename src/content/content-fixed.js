@@ -1,4 +1,3 @@
-/* global chrome */
 // Fixed content script for Note Extension
 import './content.css';
 
@@ -41,7 +40,7 @@ class NoteExtension {
     this.selectionIcon.id = 'note-extension-icon';
     this.selectionIcon.innerHTML = '+';
     this.selectionIcon.style.cssText = `
-      position: fixed;
+      position: absolute;
       width: 28px;
       height: 28px;
       background: #4f46e5;
@@ -305,6 +304,13 @@ class NoteExtension {
       });
     }
     
+    // Listen for messages from sidebar
+    window.addEventListener('message', (event) => {
+      if (event.data.type === 'SHOW_MESSAGE') {
+        this.showTemporaryMessage(event.data.message);
+      }
+    });
+    
     console.log('✅ Event listeners attached');
   }
 
@@ -355,16 +361,55 @@ class NoteExtension {
     console.log('🔄 Multi-select mode:', this.touchMultiSelectMode);
   }
 
-  showSelectionIcon(_e) {
+  showSelectionIcon() {
     try {
-      const range = window.getSelection().getRangeAt(0);
+      const selection = window.getSelection();
+      if (selection.rangeCount === 0) return;
+      
+      const range = selection.getRangeAt(0);
       const rect = range.getBoundingClientRect();
       
-      this.selectionIcon.style.display = 'block';
-      this.selectionIcon.style.left = `${rect.right + window.scrollX + 5}px`;
-      this.selectionIcon.style.top = `${rect.top + window.scrollY - 12}px`;
+      // Calculate better positioning
+      const iconWidth = 28;
+      const iconHeight = 28;
+      const padding = 8;
       
-      console.log('👁️ Selection icon shown');
+      // Get viewport dimensions
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      
+      // Calculate initial position (to the right of selection)
+      let left = rect.right + padding;
+      let top = rect.top + (rect.height / 2) - (iconHeight / 2);
+      
+      // Adjust if icon would go off-screen horizontally
+      if (left + iconWidth > viewportWidth) {
+        // Position to the left of selection instead
+        left = rect.left - iconWidth - padding;
+      }
+      
+      // Ensure icon doesn't go off-screen on the left
+      if (left < 0) {
+        left = padding;
+      }
+      
+      // Adjust if icon would go off-screen vertically
+      if (top < 0) {
+        top = rect.bottom + padding;
+      } else if (top + iconHeight > viewportHeight) {
+        top = rect.top - iconHeight - padding;
+      }
+      
+      // Ensure icon stays within viewport bounds
+      top = Math.max(padding, Math.min(top, viewportHeight - iconHeight - padding));
+      left = Math.max(padding, Math.min(left, viewportWidth - iconWidth - padding));
+      
+      // Apply position with scroll offset
+      this.selectionIcon.style.display = 'block';
+      this.selectionIcon.style.left = `${left + window.scrollX}px`;
+      this.selectionIcon.style.top = `${top + window.scrollY}px`;
+      
+      console.log('👁️ Selection icon shown at:', { left: left + window.scrollX, top: top + window.scrollY });
     } catch (error) {
       console.error('Error showing selection icon:', error);
     }
@@ -423,28 +468,43 @@ class NoteExtension {
     console.log('🧹 Cleared highlights');
   }
 
-  async addAllSelectionsToNote() {
+  addAllSelectionsToNote() {
     if (this.multiSelections.length === 0) {
       this.showTemporaryMessage('No selections to add');
       return;
     }
 
-    console.log('💾 Adding all selections to note:', this.multiSelections);
-    
+    if (this.sidebar && this.sidebar.firstChild && this.sidebar.firstChild.contentWindow) {
+      this.sidebar.firstChild.contentWindow.postMessage({
+        type: 'APPEND_TO_NOTE_BATCH',
+        texts: this.multiSelections,
+        pageUrl: window.location.href,
+        pageTitle: document.title,
+      }, '*');
+      this.showSidebar();
+      this.hideSelectionIcon();
+      this.clearMultiSelections();
+      window.getSelection().removeAllRanges();
+    } else {
+      console.warn('Sidebar iframe not ready or not found. Saving batch to current page note.');
+      this.saveAllSelectionsToCurrentPageNote(this.multiSelections);
+    }
+  }
+
+  async saveAllSelectionsToCurrentPageNote(textsToSave) {
     const pageUrl = window.location.href;
     const pageTitle = document.title;
-    
+
     try {
       if (typeof chrome === 'undefined' || !chrome.storage) {
         console.error('❌ Chrome storage API not available');
         this.showTemporaryMessage('Chrome storage not available');
         return;
       }
-      
+
       const result = await chrome.storage.local.get(['notes']);
       const notes = result.notes || {};
-      
-      // Create or update note for this page
+
       if (!notes[pageUrl]) {
         notes[pageUrl] = {
           title: pageTitle,
@@ -454,66 +514,63 @@ class NoteExtension {
           updatedAt: new Date().toISOString()
         };
       }
-      
-      // Append all selected texts
+
       const timestamp = new Date().toLocaleString();
       let newContent = notes[pageUrl].content;
-      
-      // Add batch header
       newContent += `\n\n[${timestamp} - Batch Selection]\n`;
-      
-      // Add each selection
-      this.multiSelections.forEach((selection, index) => {
+      textsToSave.forEach((selection, index) => {
         newContent += `${index + 1}. ${selection}\n`;
       });
-      
+
       notes[pageUrl].content = newContent.trim();
       notes[pageUrl].updatedAt = new Date().toISOString();
-      
-      // Save to storage
+
       await chrome.storage.local.set({ notes });
-      
-      console.log('✅ All selections saved successfully');
-      
-      // Show success message
-      this.showTemporaryMessage(`Added ${this.multiSelections.length} selections to note!`);
-      
-      // Clear selections and show sidebar
-      this.clearMultiSelections();
+      this.showTemporaryMessage(`Added ${textsToSave.length} selections to note!`);
       this.showSidebar();
       this.hideSelectionIcon();
+      this.clearMultiSelections();
       this.notifySidebar();
-      
-      // Clear current selection
       window.getSelection().removeAllRanges();
-      
     } catch (error) {
-      console.error('❌ Error saving batch selections:', error);
+      console.error('❌ Error saving batch selections to current page:', error);
       this.showTemporaryMessage('Error saving selections');
     }
   }
 
-  async addSelectedTextToNote() {
+  addSelectedTextToNote() {
     if (!this.selectedText) return;
-    
-    console.log('💾 Adding text to note:', this.selectedText);
-    
+
+    if (this.sidebar && this.sidebar.firstChild && this.sidebar.firstChild.contentWindow) {
+      this.sidebar.firstChild.contentWindow.postMessage({
+        type: 'APPEND_TO_NOTE',
+        text: this.selectedText,
+        pageUrl: window.location.href,
+        pageTitle: document.title,
+      }, '*');
+      this.showSidebar();
+      this.hideSelectionIcon();
+      window.getSelection().removeAllRanges();
+    } else {
+      console.warn('Sidebar iframe not ready or not found. Saving to current page note.');
+      this.saveSelectedTextToCurrentPageNote(this.selectedText);
+    }
+  }
+
+  async saveSelectedTextToCurrentPageNote(textToSave) {
     const pageUrl = window.location.href;
     const pageTitle = document.title;
-    
+
     try {
-      // Check if chrome APIs are available
       if (typeof chrome === 'undefined' || !chrome.storage) {
         console.error('❌ Chrome storage API not available');
         this.showTemporaryMessage('Chrome storage not available');
         return;
       }
-      
-      // Get existing notes
+
       const result = await chrome.storage.local.get(['notes']);
       const notes = result.notes || {};
-      
-      // Create or update note for this page
+
       if (!notes[pageUrl]) {
         notes[pageUrl] = {
           title: pageTitle,
@@ -523,33 +580,20 @@ class NoteExtension {
           updatedAt: new Date().toISOString()
         };
       }
-      
-      // Append selected text
+
       const timestamp = new Date().toLocaleString();
-      const newContent = `${notes[pageUrl].content}\n\n[${timestamp}]\n${this.selectedText}`;
+      const newContent = `${notes[pageUrl].content}\n\n[${timestamp}]\n${textToSave}`;
       notes[pageUrl].content = newContent.trim();
       notes[pageUrl].updatedAt = new Date().toISOString();
-      
-      // Save to storage
+
       await chrome.storage.local.set({ notes });
-      
-      console.log('✅ Note saved successfully');
-      
-      // Show success message
       this.showTemporaryMessage('Text added to note!');
-      
-      // Show sidebar with updated note
       this.showSidebar();
       this.hideSelectionIcon();
-      
-      // Notify sidebar of the update
       this.notifySidebar();
-      
-      // Clear selection
       window.getSelection().removeAllRanges();
-      
     } catch (error) {
-      console.error('❌ Error saving note:', error);
+      console.error('❌ Error saving note to current page:', error);
       this.showTemporaryMessage('Error saving note');
     }
   }

@@ -10,7 +10,7 @@ const AppleSidebar = () => {
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [currentView, setCurrentView] = useState('note');
+  const [currentView, setCurrentView] = useState('list');
   const [lastOpenedNoteUrl, setLastOpenedNoteUrl] = useState('');
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saving', 'saved', 'error'
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -32,7 +32,7 @@ const AppleSidebar = () => {
     // Load saved state first
     loadSavedState();
     
-    // Get current page info from parent window
+    // Get current page info from parent window (but don't auto-load page note)
     getCurrentPageInfo();
     
     // Load notes
@@ -53,14 +53,15 @@ const AppleSidebar = () => {
       console.log('📨 Sidebar received message:', event.data);
       
       if (event.data.type === 'PAGE_INFO') {
+        // Just store the page info, don't automatically switch to page note
         setCurrentUrl(event.data.url);
         setCurrentTitle(event.data.title);
-        loadCurrentPageNote(event.data.url, event.data.title);
+        // Don't call loadCurrentPageNote here to prevent unwanted switching
       }
       
       if (event.data.type === 'NOTE_UPDATED') {
         loadNotes();
-        loadCurrentPageNote(event.data.url, event.data.title);
+        // Don't automatically switch to page note on updates
       }
     };
     
@@ -83,6 +84,55 @@ const AppleSidebar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'APPEND_TO_NOTE') {
+        const { text, _pageUrl, _pageTitle } = event.data;
+        if (currentNote) {
+          // Always append to the currently opened note, don't switch notes
+          const timestamp = new Date().toLocaleString();
+          const newContent = `${currentNote.content}\n\n[${timestamp}]\n${text}`;
+          const updatedNote = { ...currentNote, content: newContent.trim() };
+          saveCurrentNote(updatedNote);
+          // Keep the current note active, don't redirect
+        } else {
+          // Show message to user to select a note first
+          window.parent.postMessage({
+            type: 'SHOW_MESSAGE',
+            message: 'Please select a note first to add text'
+          }, '*');
+          return;
+        }
+      } else if (event.data.type === 'APPEND_TO_NOTE_BATCH') {
+        const { texts, _pageUrl, _pageTitle } = event.data;
+        if (currentNote) {
+          // Always append to the currently opened note, don't switch notes
+          const timestamp = new Date().toLocaleString();
+          let newContent = currentNote.content;
+          newContent += `\n\n[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          const updatedNote = { ...currentNote, content: newContent.trim() };
+          saveCurrentNote(updatedNote);
+          // Keep the current note active, don't redirect
+        } else {
+          // Show message to user to select a note first
+          window.parent.postMessage({
+            type: 'SHOW_MESSAGE',
+            message: 'Please select a note first to add text'
+          }, '*');
+          return;
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [currentNote]); // Simplified dependencies to avoid circular references
+
   const getCurrentPageInfo = () => {
     try {
       if (window.parent && window.parent !== window) {
@@ -90,9 +140,9 @@ const AppleSidebar = () => {
         const parentTitle = window.parent.document.title;
         setCurrentUrl(parentUrl);
         setCurrentTitle(parentTitle);
-        loadCurrentPageNote(parentUrl, parentTitle);
+        // Don't automatically load page note - let user choose
       }
-    } catch (error) {
+    } catch {
       console.log('Cannot access parent window info (expected in iframe)');
     }
   };
@@ -238,18 +288,6 @@ const AppleSidebar = () => {
     }
   };
 
-  const handleContentChange = (newContent) => {
-    if (currentNote) {
-      const updatedNote = { ...currentNote, content: newContent };
-      
-      // Update the note without triggering a full re-render
-      setCurrentNote(updatedNote);
-      
-      // Save to storage asynchronously
-      saveCurrentNoteAsync(updatedNote);
-    }
-  };
-
   const saveCurrentNoteAsync = async (updatedNote) => {
     try {
       setSaveStatus('saving');
@@ -279,6 +317,18 @@ const AppleSidebar = () => {
     } catch (error) {
       console.error('Error saving note:', error);
       setSaveStatus('error');
+    }
+  };
+
+  const handleContentChange = (newContent) => {
+    if (currentNote) {
+      const updatedNote = { ...currentNote, content: newContent };
+      
+      // Update the note without triggering a full re-render
+      setCurrentNote(updatedNote);
+      
+      // Save to storage asynchronously
+      saveCurrentNoteAsync(updatedNote);
     }
   };
 
@@ -387,9 +437,13 @@ const AppleSidebar = () => {
   };
 
   const goToCurrentNote = () => {
-    if (currentNote || lastOpenedNoteUrl) {
+    if (currentNote && lastOpenedNoteUrl) {
       setCurrentView('note');
       saveState('note', lastOpenedNoteUrl);
+    } else {
+      // If no current note, stay on list view
+      setCurrentView('list');
+      saveState('list');
     }
   };
 
@@ -516,12 +570,8 @@ const AppleSidebar = () => {
     </div>
   );
 
-  // Update current note when URL changes
-  useEffect(() => {
-    if (currentUrl) {
-      loadCurrentPageNote(currentUrl, currentTitle);
-    }
-  }, [currentUrl, currentTitle]);
+  // Remove automatic page note loading to prevent unwanted redirections
+  // Users should manually choose which note to work with
 
   // Render Notes List Page
   const renderNotesList = () => (
@@ -701,7 +751,8 @@ const AppleSidebar = () => {
     </div>
   );
 
-  return currentView === 'list' ? renderNotesList() : renderNoteDetail();
+  // Always show notes list if no note is selected, otherwise show the selected note
+  return (currentView === 'list' || !currentNote) ? renderNotesList() : renderNoteDetail();
 };
 
 export default AppleSidebar;

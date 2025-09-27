@@ -72,6 +72,80 @@ export const Sidebar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'APPEND_TO_NOTE') {
+        const { text, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          const newContent = `${currentNote.content}\n\n[${timestamp}]\n${text}`;
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append text
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          const newContent = `[${timestamp}]\n${text}`;
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setCurrentUrl(newNoteUrl);
+          setCurrentTitle(newNote.title);
+          setLastOpenedNoteUrl(newNoteUrl);
+          setCurrentView('note'); // Switch to note view to show the new note
+          setEditingTitle(true); // Prompt user to edit title
+          saveState('note', newNoteUrl);
+          // Optionally, display a message to the user to save this new note
+        }
+      } else if (event.data.type === 'APPEND_TO_NOTE_BATCH') {
+        const { texts, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          let newContent = currentNote.content;
+          newContent += `\n\n[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append all texts
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          let newContent = `[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setCurrentUrl(newNoteUrl);
+          setCurrentTitle(newNote.title);
+          setLastOpenedNoteUrl(newNoteUrl);
+          setCurrentView('note'); // Switch to note view to show the new note
+          setEditingTitle(true); // Prompt user to edit title
+          saveState('note', newNoteUrl);
+          // Optionally, display a message to the user to save this new note
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [currentNote, saveCurrentNote, setCurrentNote, setCurrentUrl, setCurrentTitle, setLastOpenedNoteUrl, setCurrentView, setEditingTitle, saveState]); // Dependencies
+
   const getCurrentPageInfo = () => {
     // Try to get info from parent window
     try {

@@ -97,7 +97,7 @@ class NoteExtension {
     }
   }
 
-  showSelectionIcon(e) {
+  showSelectionIcon() {
     const rect = window.getSelection().getRangeAt(0).getBoundingClientRect();
     this.selectionIcon.style.display = 'block';
     this.selectionIcon.style.left = `${rect.right + window.scrollX + 5}px`;
@@ -108,18 +108,34 @@ class NoteExtension {
     this.selectionIcon.style.display = 'none';
   }
 
-  async addSelectedTextToNote() {
+  addSelectedTextToNote() {
     if (!this.selectedText) return;
-    
+
+    if (this.sidebar && this.sidebar.firstChild && this.sidebar.firstChild.contentWindow) {
+      this.sidebar.firstChild.contentWindow.postMessage({
+        type: 'APPEND_TO_NOTE',
+        text: this.selectedText,
+        pageUrl: window.location.href,
+        pageTitle: document.title,
+      }, '*');
+      this.showSidebar();
+      this.hideSelectionIcon();
+      window.getSelection().removeAllRanges();
+    } else {
+      console.warn('Sidebar iframe not ready or not found.');
+      // Fallback: if sidebar not open, save to current page's note directly
+      this.saveSelectedTextToCurrentPageNote(this.selectedText);
+    }
+  }
+
+  async saveSelectedTextToCurrentPageNote(textToSave) {
     const pageUrl = window.location.href;
     const pageTitle = document.title;
-    
+
     try {
-      // Get existing notes
       const result = await chrome.storage.local.get(['notes']);
       const notes = result.notes || {};
-      
-      // Create or update note for this page
+
       if (!notes[pageUrl]) {
         notes[pageUrl] = {
           title: pageTitle,
@@ -129,25 +145,18 @@ class NoteExtension {
           updatedAt: new Date().toISOString()
         };
       }
-      
-      // Append selected text
+
       const timestamp = new Date().toLocaleString();
-      const newContent = `${notes[pageUrl].content}\n\n[${timestamp}]\n${this.selectedText}`;
+      const newContent = `${notes[pageUrl].content}\n\n[${timestamp}]\n${textToSave}`;
       notes[pageUrl].content = newContent.trim();
       notes[pageUrl].updatedAt = new Date().toISOString();
-      
-      // Save to storage
+
       await chrome.storage.local.set({ notes });
-      
-      // Show sidebar with updated note
       this.showSidebar();
       this.hideSelectionIcon();
-      
-      // Clear selection
       window.getSelection().removeAllRanges();
-      
     } catch (error) {
-      console.error('Error saving note:', error);
+      console.error('Error saving note to current page:', error);
     }
   }
 

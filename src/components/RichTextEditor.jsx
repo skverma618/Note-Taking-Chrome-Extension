@@ -26,10 +26,10 @@ import {
 } from 'lucide-react';
 
 const RichTextEditor = ({ content, onChange, placeholder = "Start writing your note...", isDarkMode = false }) => {
-  const [, setActiveColor] = useState('#000000');
+  const [_activeColor, setActiveColor] = useState('#000000');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
-  const [, setUpdateCounter] = useState(0);
+  const [_updateCounter, setUpdateCounter] = useState(0);
 
   const editor = useEditor({
     extensions: [
