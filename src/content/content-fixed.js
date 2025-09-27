@@ -1,3 +1,4 @@
+/* global chrome */
 // Fixed content script for Note Extension
 import './content.css';
 
@@ -354,7 +355,7 @@ class NoteExtension {
     console.log('🔄 Multi-select mode:', this.touchMultiSelectMode);
   }
 
-  showSelectionIcon(e) {
+  showSelectionIcon(_e) {
     try {
       const range = window.getSelection().getRangeAt(0);
       const rect = range.getBoundingClientRect();
@@ -623,19 +624,29 @@ class NoteExtension {
       position: absolute;
       top: 10px;
       right: 10px;
-      width: 30px;
-      height: 30px;
+      width: 28px; /* Set explicit width */
+      height: 28px; /* Set explicit height */
       border: none;
-      background: #f3f4f6;
-      border-radius: 50%;
+      background: #f3f4f6; /* gray-100 equivalent */
+      border-radius: 8px; /* rounded-lg equivalent */
       cursor: pointer;
-      font-size: 18px;
+      font-size: 18px; /* Adjust font size for 'x' */
       font-weight: bold;
       z-index: 2147483648;
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #6b7280; /* gray-500 equivalent */
+      transition: all 0.2s ease;
     `;
+    
+    // Add hover styles dynamically
+    closeButton.onmouseover = () => {
+      closeButton.style.backgroundColor = '#e5e7eb'; // gray-200 equivalent
+    };
+    closeButton.onmouseout = () => {
+      closeButton.style.backgroundColor = '#f3f4f6'; // gray-100 equivalent
+    };
     
     closeButton.addEventListener('click', () => {
       this.hideSidebar();
