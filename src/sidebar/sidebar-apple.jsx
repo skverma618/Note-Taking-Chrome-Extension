@@ -1,4 +1,3 @@
-/* global chrome */
 import React, { useState, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import RichTextEditor from '../components/RichTextEditor.jsx';
@@ -15,6 +14,10 @@ const AppleSidebar = () => {
   const [lastOpenedNoteUrl, setLastOpenedNoteUrl] = useState('');
   const [saveStatus, setSaveStatus] = useState('saved'); // 'saving', 'saved', 'error'
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const generateUniqueUrl = () => {
+    return `tanil-note://new-note/${Date.now()}`;
+  };
 
   useEffect(() => {
     console.log('🍎 Apple Sidebar initializing...');
@@ -89,7 +92,7 @@ const AppleSidebar = () => {
         setCurrentTitle(parentTitle);
         loadCurrentPageNote(parentUrl, parentTitle);
       }
-    } catch (_error) {
+    } catch (error) {
       console.log('Cannot access parent window info (expected in iframe)');
     }
   };
@@ -113,8 +116,8 @@ const AppleSidebar = () => {
       }
       
       console.log('📋 Loaded saved state:', savedState);
-    } catch (_error) {
-      console.error('Error loading saved state:', _error);
+    } catch (error) {
+      console.error('Error loading saved state:', error);
     }
   };
 
@@ -132,8 +135,8 @@ const AppleSidebar = () => {
       
       await chrome.storage.local.set({ sidebarState: stateToSave });
       console.log('💾 Saved state:', stateToSave);
-    } catch (_error) {
-      console.error('Error saving state:', _error);
+    } catch (error) {
+      console.error('Error saving state:', error);
     }
   };
 
@@ -161,8 +164,8 @@ const AppleSidebar = () => {
           setCurrentTitle(allNotes[lastOpenedNoteUrl].title || 'Untitled Note');
         }
       }
-    } catch (_error) {
-      console.error('Error loading notes:', _error);
+    } catch (error) {
+      console.error('Error loading notes:', error);
     }
   };
 
@@ -197,8 +200,8 @@ const AppleSidebar = () => {
           updatedAt: new Date().toISOString()
         });
       }
-    } catch (_error) {
-      console.error('Error loading current page note:', _error);
+    } catch (error) {
+      console.error('Error loading current page note:', error);
     }
   };
 
@@ -229,8 +232,8 @@ const AppleSidebar = () => {
       
       // Show saved animation briefly
       setTimeout(() => setSaveStatus('saved'), 1000);
-    } catch (_error) {
-      console.error('Error saving note:', _error);
+    } catch (error) {
+      console.error('Error saving note:', error);
       setSaveStatus('error');
     }
   };
@@ -273,8 +276,8 @@ const AppleSidebar = () => {
       
       // Show saved animation briefly
       setTimeout(() => setSaveStatus('saved'), 1000);
-    } catch (_error) {
-      console.error('Error saving note:', _error);
+    } catch (error) {
+      console.error('Error saving note:', error);
       setSaveStatus('error');
     }
   };
@@ -316,9 +319,29 @@ const AppleSidebar = () => {
       if (currentNote && currentNote.url === url) {
         loadCurrentPageNote(currentUrl, currentTitle);
       }
-    } catch (_error) {
-      console.error('Error deleting note:', _error);
+    } catch (error) {
+      console.error('Error deleting note:', error);
     }
+  };
+
+  const handleCreateNewNote = async () => {
+    const newNoteUrl = generateUniqueUrl();
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      url: newNoteUrl,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveCurrentNote(newNote);
+    setCurrentNote(newNote);
+    setCurrentUrl(newNoteUrl);
+    setCurrentTitle(newNote.title);
+    setLastOpenedNoteUrl(newNoteUrl);
+    setCurrentView('note');
+    setEditingTitle(true); // Automatically start editing the title
+    saveState('note', newNoteUrl);
   };
 
   const openNote = async (url) => {
@@ -353,8 +376,8 @@ const AppleSidebar = () => {
       } else {
         console.warn('⚠️ Note not found for URL:', url);
       }
-    } catch (_error) {
-      console.error('❌ Error opening note:', _error);
+    } catch (error) {
+      console.error('❌ Error opening note:', error);
     }
   };
 
@@ -510,14 +533,22 @@ const AppleSidebar = () => {
             <h1 className="text-title font-sf font-semibold text-label-primary dark:text-dark-label-primary">
               Notes ({filteredNotes.length})
             </h1>
-            {currentNote && (
+            <div className="flex items-center space-x-2">
+              {currentNote && (
+                <button
+                  onClick={goToCurrentNote}
+                  className="px-3 py-2 text-body font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-lg transition-all duration-apple ease-apple min-w-[44px] min-h-[44px] flex items-center justify-center"
+                >
+                  Current
+                </button>
+              )}
               <button
-                onClick={goToCurrentNote}
+                onClick={handleCreateNewNote}
                 className="px-3 py-2 text-body font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-lg transition-all duration-apple ease-apple min-w-[44px] min-h-[44px] flex items-center justify-center"
               >
-                Current
+                + New
               </button>
-            )}
+            </div>
           </div>
           
           <div className="relative">
@@ -590,6 +621,12 @@ const AppleSidebar = () => {
             </button>
             
             <div className="flex items-center space-x-2">
+              <button
+                onClick={handleCreateNewNote}
+                className="px-3 py-2 text-body font-sf text-system-blue hover:bg-system-blue hover:bg-opacity-10 rounded-lg transition-all duration-apple ease-apple min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                + New
+              </button>
               <SaveStatusIcon />
             </div>
           </div>

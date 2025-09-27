@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 
-const Sidebar = () => {
+export const Sidebar = () => {
   const [notes, setNotes] = useState({});
   const [currentNote, setCurrentNote] = useState(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState('');
+
+  const generateUniqueUrl = () => {
+    return `tanil-note://new-note/${Date.now()}`;
+  };
 
   useEffect(() => {
     loadNotes();
@@ -120,6 +123,21 @@ const Sidebar = () => {
     }
   };
 
+  const handleCreateNewNote = async () => {
+    const newNoteUrl = generateUniqueUrl();
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      url: newNoteUrl,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveCurrentNote(newNote);
+    setCurrentNote(newNote);
+    setEditingTitle(true); // Automatically start editing the title
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -141,8 +159,14 @@ const Sidebar = () => {
   return (
     <div className="h-full bg-white flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-gray-900">Notes</h1>
+        <button
+          onClick={handleCreateNewNote}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          + New Note
+        </button>
       </div>
 
       {/* Current Page Note */}
@@ -251,7 +275,5 @@ const Sidebar = () => {
   );
 };
 
-// Initialize the sidebar
-const container = document.getElementById('sidebar-root');
-const root = createRoot(container);
-root.render(<Sidebar />);
+// The root rendering is handled elsewhere, e.g., in sidebar.html or another entry point.
+// This file now only exports the Sidebar component.
