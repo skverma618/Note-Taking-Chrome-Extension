@@ -287,33 +287,6 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
       <div className="sticky top-0 z-40 font-sf">
         <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-apple px-2 py-1">
           <div className="flex items-center flex-wrap gap-x-2">
-            {/* Font Size */}
-            <div className="flex gap-x-1">
-              <div className="relative">
-                <button
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setShowFontSizePicker(!showFontSizePicker);
-                    setShowColorPicker(false);
-                    setShowHighlightPicker(false);
-                  }}
-                  className={`
-                    flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
-                    transition-all duration-apple ease-apple-spring
-                    ${showFontSizePicker
-                      ? 'bg-system-blue text-white shadow-md'
-                      : 'text-gray-5 dark:text-dark-gray-5 hover:bg-gray-2 dark:hover:bg-dark-gray-3'
-                    }
-                    min-w-[60px] justify-center
-                  `}
-                  title="Font Size"
-                >
-                  <Type size={14} />
-                  <span>{getCurrentFontSize()}</span>
-                  <ChevronDown size={12} />
-                </button>
-              </div>
-            </div>
 
             {/* Text Formatting */}
             <div className="flex gap-x-1">
@@ -508,6 +481,34 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
               >
                 <Highlighter size={18} />
               </ToolbarButton>
+            </div>
+
+            {/* Font Size */}
+            <div className="flex gap-x-1">
+              <div className="relative">
+                <button
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    setShowFontSizePicker(!showFontSizePicker);
+                    setShowColorPicker(false);
+                    setShowHighlightPicker(false);
+                  }}
+                  className={`
+                    flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                    transition-all duration-apple ease-apple-spring
+                    ${showFontSizePicker
+                      ? 'bg-system-blue text-white shadow-md'
+                      : 'text-gray-5 dark:text-dark-gray-5 hover:bg-gray-2 dark:hover:bg-dark-gray-3'
+                    }
+                    min-w-[60px] justify-center
+                  `}
+                  title="Font Size"
+                >
+                  <Type size={14} />
+                  <span>{getCurrentFontSize()}</span>
+                  <ChevronDown size={12} />
+                </button>
+              </div>
             </div>
           </div>
         </div>
