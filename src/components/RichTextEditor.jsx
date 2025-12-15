@@ -184,7 +184,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
 
   const ToolbarButton = ({ onClick, isActive, disabled, children, tooltip }) => (
     <button
-      onClick={(e) => {
+      onMouseDown={(e) => {
         e.preventDefault();
         onClick();
       }}
@@ -229,7 +229,8 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
             {colors.map((color) => (
               <button
                 key={color}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   onSelect(color);
                   onClose();
                 }}
@@ -262,7 +263,8 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
             {fontSizes.map((size) => (
               <button
                 key={size.value}
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
                   onSelect(size.value);
                   onClose();
                 }}
@@ -289,7 +291,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
             <div className="flex gap-x-1">
               <div className="relative">
                 <button
-                  onClick={(e) => {
+                  onMouseDown={(e) => {
                     e.preventDefault();
                     setShowFontSizePicker(!showFontSizePicker);
                     setShowColorPicker(false);
@@ -488,7 +490,6 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
                   setShowColorPicker(!showColorPicker);
                   setShowHighlightPicker(false);
                   setShowFontSizePicker(false);
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
                 }}
                 isActive={showColorPicker}
                 tooltip="Text Color"
@@ -501,7 +502,6 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
                   setShowHighlightPicker(!showHighlightPicker);
                   setShowColorPicker(false);
                   setShowFontSizePicker(false);
-                  setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
                 }}
                 isActive={showHighlightPicker}
                 tooltip="Highlight"
