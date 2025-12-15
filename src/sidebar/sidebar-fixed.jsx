@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 
-const Sidebar = () => {
+export const Sidebar = () => {
   const [notes, setNotes] = useState({});
   const [currentNote, setCurrentNote] = useState(null);
   const [currentUrl, setCurrentUrl] = useState('');
   const [currentTitle, setCurrentTitle] = useState('');
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState('');
+
+  const generateUniqueUrl = () => {
+    return `tanil-note://new-note/${Date.now()}`;
+  };
   
   // Navigation state
   const [currentView, setCurrentView] = useState('note'); // 'list' or 'note'
@@ -69,6 +72,80 @@ const Sidebar = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'APPEND_TO_NOTE') {
+        const { text, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          const newContent = `${currentNote.content}\n\n[${timestamp}]\n${text}`;
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append text
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          const newContent = `[${timestamp}]\n${text}`;
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setCurrentUrl(newNoteUrl);
+          setCurrentTitle(newNote.title);
+          setLastOpenedNoteUrl(newNoteUrl);
+          setCurrentView('note'); // Switch to note view to show the new note
+          setEditingTitle(true); // Prompt user to edit title
+          saveState('note', newNoteUrl);
+          // Optionally, display a message to the user to save this new note
+        }
+      } else if (event.data.type === 'APPEND_TO_NOTE_BATCH') {
+        const { texts, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          let newContent = currentNote.content;
+          newContent += `\n\n[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append all texts
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          let newContent = `[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setCurrentUrl(newNoteUrl);
+          setCurrentTitle(newNote.title);
+          setLastOpenedNoteUrl(newNoteUrl);
+          setCurrentView('note'); // Switch to note view to show the new note
+          setEditingTitle(true); // Prompt user to edit title
+          saveState('note', newNoteUrl);
+          // Optionally, display a message to the user to save this new note
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [currentNote, saveCurrentNote, setCurrentNote, setCurrentUrl, setCurrentTitle, setLastOpenedNoteUrl, setCurrentView, setEditingTitle, saveState]); // Dependencies
+
   const getCurrentPageInfo = () => {
     // Try to get info from parent window
     try {
@@ -79,7 +156,7 @@ const Sidebar = () => {
         setCurrentTitle(parentTitle);
         loadCurrentPageNote(parentUrl, parentTitle);
       }
-    } catch (error) {
+    } catch {
       console.log('Cannot access parent window info (expected in iframe)');
       // This is expected in iframe context, we'll get info via messages
     }
@@ -267,6 +344,26 @@ const Sidebar = () => {
     }
   };
 
+  const handleCreateNewNote = async () => {
+    const newNoteUrl = generateUniqueUrl();
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      url: newNoteUrl,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveCurrentNote(newNote);
+    setCurrentNote(newNote);
+    setCurrentUrl(newNoteUrl);
+    setCurrentTitle(newNote.title);
+    setLastOpenedNoteUrl(newNoteUrl);
+    setCurrentView('note');
+    setEditingTitle(true); // Automatically start editing the title
+    saveState('note', newNoteUrl);
+  };
+
   const openNote = async (url) => {
     try {
       console.log('📖 Opening note for URL:', url);
@@ -352,14 +449,22 @@ const Sidebar = () => {
       <div className="p-4 border-b border-gray-200">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-semibold text-gray-900">All Notes</h1>
-          {currentNote && (
+          <div className="flex items-center space-x-2">
+            {currentNote && (
+              <button
+                onClick={goToCurrentNote}
+                className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50"
+              >
+                Current Note →
+              </button>
+            )}
             <button
-              onClick={goToCurrentNote}
-              className="text-sm text-blue-600 hover:text-blue-800 px-3 py-1 rounded-md hover:bg-blue-50"
+              onClick={handleCreateNewNote}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
             >
-              Current Note →
+              + New Note
             </button>
-          )}
+          </div>
         </div>
         <p className="text-xs text-gray-500 mt-1">{Object.keys(notes).length} notes saved</p>
       </div>
@@ -438,12 +543,20 @@ const Sidebar = () => {
           >
             ← All Notes
           </button>
-          <button
-            onClick={handleTitleEdit}
-            className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
-          >
-            Edit Title
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={handleCreateNewNote}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+            >
+              + New Note
+            </button>
+            <button
+              onClick={handleTitleEdit}
+              className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
+            >
+              Edit Title
+            </button>
+          </div>
         </div>
         
         {editingTitle ? (
@@ -514,13 +627,5 @@ const Sidebar = () => {
   return currentView === 'list' ? renderNotesList() : renderNoteDetail();
 };
 
-// Initialize the sidebar
-console.log('🚀 Sidebar script loading...');
-const container = document.getElementById('sidebar-root');
-if (container) {
-  const root = createRoot(container);
-  root.render(<Sidebar />);
-  console.log('✅ Sidebar rendered');
-} else {
-  console.error('❌ Sidebar root container not found');
-}
+// The root rendering is handled elsewhere, e.g., in sidebar-fixed.html or another entry point.
+// This file now only exports the Sidebar component.

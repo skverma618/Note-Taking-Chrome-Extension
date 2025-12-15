@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { createRoot } from 'react-dom/client';
 
-const Sidebar = () => {
+export const Sidebar = () => {
   const [notes, setNotes] = useState({});
   const [currentNote, setCurrentNote] = useState(null);
   const [editingTitle, setEditingTitle] = useState(false);
   const [tempTitle, setTempTitle] = useState('');
+
+  const generateUniqueUrl = () => {
+    return `tanil-note://new-note/${Date.now()}`;
+  };
 
   useEffect(() => {
     loadNotes();
@@ -25,6 +28,70 @@ const Sidebar = () => {
       chrome.storage.onChanged.removeListener(handleStorageChange);
     };
   }, []);
+
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data.type === 'APPEND_TO_NOTE') {
+        const { text, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          const newContent = `${currentNote.content}\n\n[${timestamp}]\n${text}`;
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append text
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          const newContent = `[${timestamp}]\n${text}`;
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setEditingTitle(true); // Prompt user to edit title
+          // Optionally, display a message to the user to save this new note
+        }
+      } else if (event.data.type === 'APPEND_TO_NOTE_BATCH') {
+        const { texts, _pageUrl, pageTitle } = event.data;
+        if (currentNote) {
+          const timestamp = new Date().toLocaleString();
+          let newContent = currentNote.content;
+          newContent += `\n\n[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          saveCurrentNote({ ...currentNote, content: newContent.trim() });
+        } else {
+          // If no note is open, create a new temporary note and append all texts
+          const newNoteUrl = `tanil-note://temp-note/${Date.now()}`;
+          const timestamp = new Date().toLocaleString();
+          let newContent = `[${timestamp} - Batch Selection]\n`;
+          texts.forEach((selection, index) => {
+            newContent += `${index + 1}. ${selection}\n`;
+          });
+          const newNote = {
+            title: pageTitle || 'New Note',
+            content: newContent.trim(),
+            url: newNoteUrl,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          saveCurrentNote(newNote);
+          setCurrentNote(newNote);
+          setEditingTitle(true); // Prompt user to edit title
+          // Optionally, display a message to the user to save this new note
+        }
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => {
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [currentNote, saveCurrentNote, setCurrentNote, setEditingTitle]); // Dependencies
 
   const loadNotes = async () => {
     try {
@@ -120,6 +187,21 @@ const Sidebar = () => {
     }
   };
 
+  const handleCreateNewNote = async () => {
+    const newNoteUrl = generateUniqueUrl();
+    const newNote = {
+      title: 'New Note',
+      content: '',
+      url: newNoteUrl,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    await saveCurrentNote(newNote);
+    setCurrentNote(newNote);
+    setEditingTitle(true); // Automatically start editing the title
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short',
@@ -141,8 +223,14 @@ const Sidebar = () => {
   return (
     <div className="h-full bg-white flex flex-col">
       {/* Header */}
-      <div className="p-4 border-b border-gray-200">
+      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         <h1 className="text-lg font-semibold text-gray-900">Notes</h1>
+        <button
+          onClick={handleCreateNewNote}
+          className="px-3 py-1 text-sm bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          + New Note
+        </button>
       </div>
 
       {/* Current Page Note */}
@@ -251,7 +339,5 @@ const Sidebar = () => {
   );
 };
 
-// Initialize the sidebar
-const container = document.getElementById('sidebar-root');
-const root = createRoot(container);
-root.render(<Sidebar />);
+// The root rendering is handled elsewhere, e.g., in sidebar.html or another entry point.
+// This file now only exports the Sidebar component.

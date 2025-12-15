@@ -75,3 +75,24 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     });
   }
 });
+
+// Handle extension icon click to directly open sidebar
+chrome.action.onClicked.addListener(async (tab) => {
+  try {
+    // Send message to content script to toggle sidebar
+    await chrome.tabs.sendMessage(tab.id, { action: 'toggleSidebar' });
+  } catch (error) {
+    console.error('Error opening sidebar:', error);
+    // If content script is not loaded, inject it first
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ['content.js']
+      });
+      // Try again after injecting content script
+      await chrome.tabs.sendMessage(tab.id, { action: 'toggleSidebar' });
+    } catch (injectionError) {
+      console.error('Error injecting content script:', injectionError);
+    }
+  }
+});

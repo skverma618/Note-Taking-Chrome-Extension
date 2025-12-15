@@ -16,8 +16,10 @@ export default defineConfig({
         content: resolve(__dirname, 'src/content/content-fixed.js'),
         // Background script
         background: resolve(__dirname, 'src/background/background.js'),
-        // Sidebar React app
+        // Sidebar React app (original)
         sidebar: resolve(__dirname, 'src/sidebar/sidebar-fixed.html'),
+        // Apple-styled sidebar
+        'sidebar-apple': resolve(__dirname, 'src/sidebar/sidebar-apple.html'),
         // Popup React app
         popup: resolve(__dirname, 'src/popup/popup.html')
       },

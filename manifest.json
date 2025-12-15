@@ -6,7 +6,8 @@
   "permissions": [
     "storage",
     "activeTab",
-    "contextMenus"
+    "contextMenus",
+    "scripting"
   ],
   "content_scripts": [
     {
@@ -19,12 +20,11 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_popup": "src/popup/popup.html",
     "default_title": "Note Extension"
   },
   "web_accessible_resources": [
     {
-      "resources": ["src/sidebar/sidebar-fixed.html", "assets/*"],
+      "resources": ["src/sidebar/sidebar-fixed.html", "src/sidebar/sidebar-apple.html", "sidebar-apple.html", "assets/*"],
       "matches": ["<all_urls>"]
     }
   ]
