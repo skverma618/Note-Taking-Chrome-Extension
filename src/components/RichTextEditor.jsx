@@ -8,6 +8,7 @@ import { Underline } from '@tiptap/extension-underline';
 import { TaskList } from '@tiptap/extension-task-list';
 import { TaskItem } from '@tiptap/extension-task-item';
 import { Typography } from '@tiptap/extension-typography';
+import { Extension } from '@tiptap/core';
 import {
   Bold,
   Italic,
@@ -23,18 +24,71 @@ import {
   Code2,
   Palette,
   Highlighter,
+  Type,
+  ChevronDown,
 } from 'lucide-react';
+
+// Custom FontSize extension
+const FontSize = Extension.create({
+  name: 'fontSize',
+
+  addOptions() {
+    return {
+      types: ['textStyle'],
+    }
+  },
+
+  addGlobalAttributes() {
+    return [
+      {
+        types: this.options.types,
+        attributes: {
+          fontSize: {
+            default: null,
+            parseHTML: element => element.style.fontSize?.replace(/['"]+/g, ''),
+            renderHTML: attributes => {
+              if (!attributes.fontSize) {
+                return {}
+              }
+              return {
+                style: `font-size: ${attributes.fontSize}`,
+              }
+            },
+          },
+        },
+      },
+    ]
+  },
+
+  addCommands() {
+    return {
+      setFontSize: fontSize => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize })
+          .run()
+      },
+      unsetFontSize: () => ({ chain }) => {
+        return chain()
+          .setMark('textStyle', { fontSize: null })
+          .removeEmptyTextStyle()
+          .run()
+      },
+    }
+  },
+})
 
 const RichTextEditor = ({ content, onChange, placeholder = "Start writing your note...", isDarkMode = false }) => {
   const [_activeColor, setActiveColor] = useState('#000000');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showHighlightPicker, setShowHighlightPicker] = useState(false);
+  const [showFontSizePicker, setShowFontSizePicker] = useState(false);
   const [_updateCounter, setUpdateCounter] = useState(0);
 
   const editor = useEditor({
     extensions: [
       StarterKit,
       TextStyle,
+      FontSize,
       Color,
       Highlight.configure({
         multicolor: true,
@@ -99,7 +153,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
   }
 
   const colors = [
-    '#000000', '#374151', '#6B7280', '#EF4444', '#F97316', 
+    '#000000', '#374151', '#6B7280', '#EF4444', '#F97316',
     '#EAB308', '#22C55E', '#06B6D4', '#3B82F6', '#8B5CF6', '#EC4899'
   ];
 
@@ -107,13 +161,33 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
     '#FEF3C7', '#FECACA', '#FED7AA', '#D1FAE5', '#DBEAFE', '#E0E7FF', '#F3E8FF', '#FCE7F3'
   ];
 
+  const fontSizes = [
+    { label: '10px', value: '10px' },
+    { label: '12px', value: '12px' },
+    { label: '14px', value: '14px' },
+    { label: '16px', value: '16px' },
+    { label: '18px', value: '18px' },
+    { label: '20px', value: '20px' },
+    { label: '24px', value: '24px' },
+    { label: '28px', value: '28px' },
+    { label: '32px', value: '32px' },
+    { label: '36px', value: '36px' },
+    { label: '48px', value: '48px' },
+  ];
+
+  // Get current font size
+  const getCurrentFontSize = () => {
+    if (!editor) return '16px';
+    const { fontSize } = editor.getAttributes('textStyle');
+    return fontSize || '16px';
+  };
+
   const ToolbarButton = ({ onClick, isActive, disabled, children, tooltip }) => (
     <button
-      onMouseDown={(e) => {
-        // Prevent the button from taking focus away from the editor
+      onClick={(e) => {
         e.preventDefault();
+        onClick();
       }}
-      onClick={onClick}
       disabled={disabled}
       className={`
         relative w-7 h-7 flex items-center justify-center rounded-md
@@ -169,12 +243,76 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
     );
   };
 
+  const FontSizePicker = ({ fontSizes, onSelect, show, onClose, currentSize }) => {
+    if (!show) return null;
+    
+    return (
+      <div className="fixed inset-0 z-50" onClick={onClose}>
+        <div
+          className="absolute bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 p-1 min-w-[40px]"
+          style={{
+            top: '60px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="max-h-48 overflow-y-auto">
+            {fontSizes.map((size) => (
+              <button
+                key={size.value}
+                onClick={() => {
+                  onSelect(size.value);
+                  onClose();
+                }}
+                className={`w-full text-left px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-xs ${
+                  currentSize === size.value ? 'bg-system-blue text-white' : 'text-gray-700 dark:text-gray-300'
+                }`}
+              >
+                {size.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className={`w-full ${isDarkMode ? 'dark' : ''}`}>
       {/* Toolbar */}
       <div className="sticky top-0 z-40 font-sf">
         <div className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-apple px-2 py-1">
           <div className="flex items-center flex-wrap gap-x-2">
+            {/* Font Size */}
+            <div className="flex gap-x-1">
+              <div className="relative">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setShowFontSizePicker(!showFontSizePicker);
+                    setShowColorPicker(false);
+                    setShowHighlightPicker(false);
+                  }}
+                  className={`
+                    flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium
+                    transition-all duration-apple ease-apple-spring
+                    ${showFontSizePicker
+                      ? 'bg-system-blue text-white shadow-md'
+                      : 'text-gray-5 dark:text-dark-gray-5 hover:bg-gray-2 dark:hover:bg-dark-gray-3'
+                    }
+                    min-w-[60px] justify-center
+                  `}
+                  title="Font Size"
+                >
+                  <Type size={14} />
+                  <span>{getCurrentFontSize()}</span>
+                  <ChevronDown size={12} />
+                </button>
+              </div>
+            </div>
+
             {/* Text Formatting */}
             <div className="flex gap-x-1">
               <ToolbarButton
@@ -349,6 +487,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
                 onClick={() => {
                   setShowColorPicker(!showColorPicker);
                   setShowHighlightPicker(false);
+                  setShowFontSizePicker(false);
                   setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
                 }}
                 isActive={showColorPicker}
@@ -361,6 +500,7 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
                 onClick={() => {
                   setShowHighlightPicker(!showHighlightPicker);
                   setShowColorPicker(false);
+                  setShowFontSizePicker(false);
                   setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
                 }}
                 isActive={showHighlightPicker}
@@ -422,6 +562,18 @@ const RichTextEditor = ({ content, onChange, placeholder = "Start writing your n
           editor.chain().focus().setHighlight({ color }).run();
         }}
         onClose={() => setShowHighlightPicker(false)}
+      />
+
+      {/* Font Size Picker */}
+      <FontSizePicker
+        fontSizes={fontSizes}
+        show={showFontSizePicker}
+        currentSize={getCurrentFontSize()}
+        onSelect={(fontSize) => {
+          editor.chain().focus().setFontSize(fontSize).run();
+          setTimeout(() => setUpdateCounter(prev => prev + 1), 0);
+        }}
+        onClose={() => setShowFontSizePicker(false)}
       />
     </div>
   );
